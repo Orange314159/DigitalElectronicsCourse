@@ -1,0 +1,24 @@
+* Schematics Netlist *
+.include "..\Models\MOSIS.txt" 
+ 
+* NMOS transistor, connect a b c d to the correct nets of the circuit
+MN2 net2 net1 0 0 tsmc0p35nmos W=3.676u L=0.4u 
+
+* current probe - Ammeter to measure current
+* The device with the arrow and the name Drain
+VDrain1 net3 net2 0 
+
+* Voltage sources for Drain and Gate
+VVSds net3 0 DC 2.5         
+VVSgs net1 0 DC 2.5         
+ 
+* step (aka sweep) VSds from 0V to 2.5V in steps of 0.1V
+* step (aka sweep) VSgs from 0V to 2.5V in steps of 0.5V
+.dc VVSds 0 2.5 0.1  VVSgs 0.78 0.8 0.05
+.end 
+.control
+run 
+set color0 = white
+set xbrushwidth = 5
+plot i(vdrain1)
+.endc

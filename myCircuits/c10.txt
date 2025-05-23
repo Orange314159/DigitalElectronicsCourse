@@ -1,0 +1,93 @@
+Buffer simulation
+
+* Given Transistor *
+.include "../Models/MOSIS.txt"
+
+
+*------------------------------------ \Params ------------------------------------*
+
+.param maxw   = 194.39u
+.param diff1 = 2.718
+.param diff2 = 1.6
+.param diff3 = 1.6
+
+.param totalsmall = 'maxw / (diff1 + 1)'
+.param totallarge = 'totalsmall * diff1'
+
+.param nmossmall = 'totalsmall / (diff2 + 1)'
+.param pmossmall = 'nmossmall * diff2'
+.param nmoslarge = 'totallarge / (diff3 + 1)'
+.param pmoslarge = 'nmoslarge * diff3'
+
+*------------------------------------ Params\ ------------------------------------*
+
+
+*------------------------------------ \Circuit ------------------------------------*
+
+Cload 0 buf_out 4pf
+
+Vsupply vdd 0 1.8V
+.global vdd
+
+* INVERTER *
+.subckt inv in out wp=1u wn=1u
+	Mp0 out in vdd vdd ibm0p13pmos W='wp' L=0.13u
+	Mn0 out in 0   0   ibm0p13nmos W='wn' L=0.12u
+.ends
+
+* PULSE GATE VOLTAGE *
+VPulse1 Vin 0  pulse(0 1.8V 0 0.2n 0.2n 1.6n 4n)
+
+* INPUT CONDITIONING *
+*this gives a curve to the input voltage for the buffer*
+xinv0 Vin net1 inv wp=2.5u wn=1.0u
+xinv1 net1 buf_in inv wp=2.5u wn=1.0u
+
+* BUFFERS * <---- THIS ONE IS THE IMPORTANT ONE
+xinv2 buf_in  buf_mid inv wp='pmossmall' wn='nmossmall'
+xinv3 buf_mid buf_out inv wp='pmoslarge' wn='nmoslarge'
+
+.control
+
+*------------------------------------ Circuit\ ------------------------------------*
+
+
+*-------------------------------------- \Sim --------------------------------------*
+
+set dr1 = ( 3.80 3.82 3.83 3.84 3.86  3.88 3.900 )
+set dr2 = ( 1.38 1.385 1.39 1.395 1.40 1.410 )
+set dr3 = ( 1.59 1.595 1.60 1.605 1.61 1.615 )
+
+
+let first = 1
+
+foreach d1 $dr1
+	foreach d2 $dr2
+		foreach d3 $dr3
+
+      			alterparam diff1 = $d1
+      			alterparam diff2 = $d2			
+      			alterparam diff3 = $d3
+      			reset
+	
+      			meas tran tphl2 TRIG V(buf_in) TD=3.5n val=0.9 rise=1 TARG V(buf_out) TD=3.5n val=0.9 rise=1
+			meas tran tplh2 TRIG V(buf_in) TD=3.5n val=0.9 fall=1 TARG V(buf_out) TD=3.5n val=0.9 fall=1
+	
+
+			if (first > 0)
+				echo d1 $d1 d2 $d2 d3 $d3 tphl2 $&tphl2 tplh2 $&tplh2  >  c10out.txt
+				let first = 0
+			else
+				echo d1 $d1 d2 $d2 d3 $d3 tphl2 $&tphl2 tplh2 $&tplh2  >> c10out.txt
+			end
+
+
+			tran 2p 9n
+		end
+	end
+end
+
+*-------------------------------------- Sim\ --------------------------------------*
+
+.endc
+.end

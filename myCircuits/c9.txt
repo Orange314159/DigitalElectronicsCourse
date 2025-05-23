@@ -1,0 +1,55 @@
+* .step emulation: 3 nested loops, ac simulation
+* R1, C2 change by param, R2 changes directly
+* loops by foreach
+* commands alterparam, alter: all three alter commands inside of inner loop
+* alterparam first, followed by reset, only then followed by alter
+* print out the results into a file threeloopsac.txt, located in the input
+* directory (where this netlist has been found).
+
+.param rr1 = 1k cc2 = 1u
+
+V1 1 0 dc 0 ac 1
+R1 1 11 {rr1}
+R2 11 10 100
+C2 10 0 {cc2}
+
+.ac dec 10 1 1e4
+
+.control
+let index = 0        ; new loop index vector (in plot 'const')
+set plotstrdb = ' '  ; new variable containing string with space (will become a list of strings, see below)
+set plotstrph = ' '  ; new variable containing string with space (will become a list of strings, see below)
+set writestr = ' '   ; new variable containing string with space (will become a list of strings, see below)
+set cvalues = ( 1u 0.5u 0.25u ) ; variable containing loop values for C2
+
+** loop start **
+foreach val1 10k 20k 30k                                    ; outermost loop with a value list
+  foreach val2 $cvalues                                     ; loop in the middle with a variable containing a value list
+    foreach val3 1m 3.3k 6.6k                               ; inner loop with a value list
+      let index = index + 1                                 ; raise loop index
+      echo ac sim no. $&index',' R1=$val1',' R2=$val3',' C2=$val2 ; print to console where we are
+      alterparam rr1 = $val1                                ; change parameter of outer loop
+      alterparam cc2 = $val2                                ; change paramater of middle loop
+      reset                                                 ; reset to activate above parameter changes
+      alter R2 $val3                                        ; change inner loop value (possible only after reset!)
+      run                                                   ; run the simulation (see .ac ... above)
+      set plotstrdb = ( $plotstrdb db({$curplot}.v(10)) )   ; add a new item (string) to already exising list of strings
+      set plotstrph = ( $plotstrph cph({$curplot}.v(10)) )  ; add a new item (string) to already exising list of strings
+      set writestr = ( $writestr {$curplot}.v(10) )         ; add a new item (string) to already exising list of strings
+    end
+  end
+end
+** loop end, start plotting **
+set nolegend                  ; legend for 27 graphs is unreadable
+set units=degrees             ; phase in degrees
+set xbrushwidth=2             ; increase linewidth of graphs
+plot $plotstrdb xlimit 1 1e4  ; plot all 27 magnitudes
+plot $plotstrph xlimit 1 1e4  ; plot all 27 phases
+set wr_singlescale            ; for wrdata: write the scale only once
+set wr_vecnames               ; for wrdata: write the vector names
+option numdgt = 3             ; for wrdata: 3 digits after decimal point
+wrdata $inputdir/threeloopsac.txt $writestr  ; write ac output v(10) into file for all runs
+rusage                        ; list some resource usage
+.endc
+
+.end

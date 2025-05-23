@@ -1,0 +1,87 @@
+* Buffer simulation
+.include "../Models/MOSIS.txt"
+.param NMOSsmall = 10um
+.param PMOSsmall = 10um
+.param NMOSlarge = 10um
+.param PMOSlarge = 10um
+
+Cload 0 buf_out 4pf
+
+Vsupply vdd 0 1.8V
+.global vdd
+
+.subckt inv in out wp=1u wn=1u
+Mp0 out in vdd vdd ibm0p13pmos W='wp' L=0.13u
+Mn0 out in 0 0 ibm0p13nmos W='wn' L=0.12u
+.ends
+
+VPulse1 Vin 0  pulse(0 1.8V 0 0.2n 0.2n 1.6n 4n)
+
+*input conditioning 
+xinv0 Vin net1 inv wp=2.5u wn=1.0u
+xinv1 net1 buf_in inv wp=2.5u wn=1.0u
+
+*buffer
+xinv2 buf_in  buf_mid inv wp=25.86u wn={NMOSsmall}
+xinv3 buf_mid buf_out inv wp=89.00u wn=63.57u
+.TRAN 2p 9n
+.end
+.control
+run
+
+
+* These are the three vars used to calculate the sizing *
+* According to some sources the optimal values are e for diff1 and between 1.6-1.9 for diff2 and diff3 *
+let diff1 = 2.71828
+let diff2 = 1.6
+let diff3 = 1.6
+
+* Max is the max size used *
+let max = 200
+
+
+* Starting Best Vals
+let bestNMOSsmall = 0
+let bestPMOSsmall = 0
+let bestNMOSlarge = 0
+let bestPMOSlarge = 0
+let bestLH        = 1000
+let bestHL        = 1000
+let bestTOTAL     = 1000
+
+let diff1 = 2.71828
+repeat 50
+	let diff2 = 1.0
+	repeat 50
+		let diff3 = 1.0
+		repeat 50
+			* This is the part that changes *
+			alterparam NMOSsmall = ( max / (diff1+1) ) / (diff2 + 1)
+			alterparam PMOSsmall = NMOSsmall * diff2
+			alterparam NMOSlarge = ( (max / (diff1+1)) * diff1 ) / (diff3 + 1)
+			alterparam PMOSlarge = NMOSlarge * diff3
+			mc_source
+
+
+			meas tran tphl2 TRIG V(buf_in) TD=3.5n val=0.9 rise=1 TARG V(buf_out) TD=3.5n val=0.9 rise=1
+			meas tran tplh2 TRIG V(buf_in) TD=3.5n val=0.9 fall=1 TARG V(buf_out) TD=3.5n val=0.9 fall=1
+			if ((tphl2 + tplh2) < bestTotal)
+				let bestTotal = (tphl2 + tplh2)
+				let bestLH    = tplh2
+				let bestHL    = tphl2
+				let bestNMOSsmall = NMOSsmall
+				let bestPMOSsmall = PMOSsmall
+				let bestNMOSlarge = NMOSlarge
+				let bestPMOSlarge = PMOSlarge
+			end
+			let diff3 = diff3 + 0.02
+		end
+		let diff2 = diff2 + 0.02
+	end	
+	let diff1 = diff1 + 0.02
+end
+
+
+
+
+.endc 

@@ -1,0 +1,104 @@
+* source C:\Users\E151509\Documents\CoolSpice\MyNetlists\flip_flop_start_2019.net
+.include "../Models/MOSIS.txt"
+ 
+*********** define parameters *********** 
+.param vdd = 3.3 
+.param Lmin = 0.35u 
+ 
+***************** define stimulii ********************* 
+vdd vdd 0 vdd 
+
+**** CLOCK 
+Va clk 0 pwl(0n 0 4n 0 4.1n 3.3 8n 3.3 8.1n 0 12n 0 12.1n 3.3 16n 3.3 16.1n 0 20n 0 20.1n 3.3 24n 3.3 24.1n 0)
+
+**** Flip-flop clk-to-q delay
+** SIMULATION 1
+**Vb data 0 pwl(0n 0 11.78n 0 11.88n 3.3 19.74n 3.3 19.84n 0 23.0n 0 23.1n 3.3)
+** SIMULATION 2
+**Vb data 0 pwl(0n 0 11.78n 0 11.88n 3.3 19.74n 3.3 19.84n 0 23.0n 0 23.1n 3.3)
+** SIMULATION 3
+**Vb data 0 pwl(0n 0 5.00n 0 5.10n 3.3 11.95n 3.3 12.05n 0 19.93n 0 20.03n 3.3)
+** SIMULATION 4
+Vb data 0 pwl(0n 0 11.68n 0 11.78n 3.3 12.05n 3.3 12.15n 0 18.93n 0 19.03n 3.3 19.74n 3.3 19.84n 0 20.00n 0 20.10n 3.3)
+***** define global nodes for use in subcircuits ***** 
+.global vdd 
+ 
+.subckt ptran gate drain source Wp=1.0u
+Mp1 drain gate source vdd tsmc0p35pmos W=Wp L=Lmin 
++ PD='Wp + 6*Lmin' PS='Wp + 6*Lmin' 
++ AD='3*Wp*Lmin' AS='3*Wp*Lmin' 
+.ends 
+
+.subckt ntran gate drain source Wn=1.0u 
+Mn1 drain gate source 0 tsmc0p35nmos W=Wn L=Lmin 
++ PD='Wn + 6*Lmin' PS='Wn + 6*Lmin' 
++ AD='3*Wn*Lmin' AS='3*Wn*Lmin' 
+.ends 
+
+.subckt inv in out Wp=1.0u Wn=1.0u
+Xpmos in out vdd ptran Wp=Wp
+Xnmos in out 0   ntran Wn=Wn
+.ends
+
+.subckt tgate ngate pgate in out Wp=1.0u Wn=1.0u
+Xpmos pgate in out ptran Wp=Wp
+Xnmos ngate in out ntran Wn=Wn
+.ends
+
+********* define main circuit ****************** 
+** INPUT D LATCH
+Xinv0 clk clkb inv Wp=4.0u Wn=2.0u
+Xtgate0 clkb clk data n1 tgate Wp=4.0u Wn=2.0u
+Xinv1 n1 n2 inv Wp=4.0u Wn=2.0u
+Xinv2 n2 n4 inv Wp=4.0u Wn=2.0u
+Xinv3 n2 n3 inv Wp=4.0u Wn=2.0u
+Xtgate1 clk clkb n3 n1 tgate Wp=4.0u Wn=2.0u
+
+** OUTPUT D LATCH
+Xtgate2 clk clkb n4 n5 tgate Wp=4.0u Wn=2.0u
+Xinv4 n5 n6 inv Wp=4.0u Wn=2.0u
+Xinv5 n6 q  inv Wp=4.0u Wn=2.0u
+Xinv6 n6 n7 inv Wp=4.0u Wn=2.0u
+Xtgate3 clkb clk n7 n5 tgate Wp=4.0u Wn=2.0u
+
+* Load capacitance 
+Cl q 0 0.1p 
+
+
+****** Anlysis Options ********** 
+.tran 1p 28n  
+
+.meas tran tlh_clk_to_q trig v(clk) td=10ns val='vdd/2' cross=1 
++ targ v(q) td=10ns val='vdd/2' cross=1 
+
+.meas tran thl_clk_to_q trig v(clk) td=18ns val='vdd/2' cross=1 
++ targ v(q) td=18ns val='vdd/2' cross=1 
+
+.meas tran tlh_setup trig v(data) td=4ns val='vdd/2' cross=1 
++ targ v(clk) td=11ns val='vdd/2' cross=1 
+
+.meas tran thl_setup trig v(data) td=13ns val='vdd/2' cross=1 
++ targ v(clk) td=19ns val='vdd/2' cross=1 
+
+.meas tran thigh_hold trig v(clk) td=11ns val='vdd/2' cross=1 
++ targ v(data) td=11ns val='vdd/2' cross=1 
+
+.meas tran tlow_hold trig v(clk) td=19.5ns val='vdd/2' cross=1 
++ targ v(data) td=19.5ns val='vdd/2' cross=1 
+
+.end 
+
+.control
+run 
+set color0 = white
+set xbrushwidth = 5
+*plot v(clk) v(data) v(q) xdelta 20n ydelta 2
+*plot v(clk) v(data) v(q) xlimit 18.0n 22.5n xdelta 4n ydelta 2
+*plot v(clk) v(data) v(q) xlimit 7.5n 16.5n xdelta 5n ydelta 2
+*plot v(clk) v(data) v(q) xdelta 20n ydelta 2
+*plot v(clk) v(data) xdelta 20n ydelta 2
+*plot v(clk) xdelta 20n ydelta 2
+plot v(clk) v(data) v(q) xlimit 10.0n 13.5n xdelta 3n ydelta 2
+plot v(clk) v(data) v(q) xlimit 18.0n 21.5n xdelta 3n ydelta 2
+.endc
+

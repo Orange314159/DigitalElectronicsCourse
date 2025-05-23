@@ -1,0 +1,77 @@
+*Ring Oscillator
+
+* Needed Transistor Model *
+.include "../Models/MOSIS.txt"
+
+.option temp = -30
+
+
+*---------------------------------- Circuit\ ----------------------------------*
+
+Vsupply vdd 0 1.8V
+.global vdd
+
+.subckt inv in out wp=1u wn=1u
+	Mp0 out in vdd vdd ibm0p13pmos W='wp' L=0.13u
+	Mn0 out in 0 0 ibm0p13nmos W='wn' L=0.12u
+.ends
+
+* Five Inverters and Capacitors *
+xinv0 net5 net1  inv wp=5.4u wn=2.23u
+Cc0   0 net1 100ff
+
+xinv1 net1 net2  inv wp=5.4u wn=2.23u
+Cc1   0 net2 100ff
+
+xinv2 net2 net3  inv wp=5.4u wn=2.23u
+Cc2   0 net3 100ff
+
+xinv3 net3 net4  inv wp=5.4u wn=2.23u
+Cc3   0 net4 100ff
+
+xinv4 net4 net5  inv wp=5.4u wn=2.23u
+Cc4   0 net5 100ff
+
+*---------------------------------- \Circuit ----------------------------------*
+
+
+*------------------------------------ Plot\ ------------------------------------*
+
+.TRAN 2p 9n
+.end
+.control
+run 
+set color0 = white
+set xbrushwidth = 5 
+plot v(net1) v(net2) v(net3) v(net4) v(net5)
+
+*------------------------------------ \Plot ------------------------------------*
+
+
+*------------------------------------ Meas\ ------------------------------------*
+
+* Measure Period of net1 at 3.5ns *
+meas tran period TRIG V(net2) TD=3.5n val=0.9 rise=1 TARG V(net2) TD=3.5n val=0.9 rise=2
+
+* RESULT = 1126570664.82 hz * 
+* 1.126 gHz*
+* Period of: 8.876496e-10 s *
+* @ 125c 1185698671.76 hz *
+* 1.186 gHz*
+* @ -30c 1185698671.76 hz *
+* 1.186 gHz*
+
+
+*Measure the Rise and Fall Times *
+meas tran rise TRIG V(net1) TD=5n val=0.18 rise=1 TARG V(net1) TD=5n val=1.62 rise=1
+meas tran fall TRIG V(net1) TD=5n val=1.62 fall=2 TARG V(net1) TD=5n val=0.18 fall=2
+
+* rise = 1.316709e-10 s *
+* 131.7ps *
+* fall = 1.323265e-10 s *
+* 132.3ps *
+
+*------------------------------------ \Meas ------------------------------------*
+
+
+.endc 

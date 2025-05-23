@@ -1,0 +1,78 @@
+* source C:\Users\E151509\Documents\CoolSpice\MyNetlists\dlatch_start.net
+.include "../Models/MOSIS.txt"
+ 
+*********** define parameters *********** 
+.param vdd = 3.3 
+.param Lmin = 0.35u 
+ 
+ 
+***************** define stimulii ********************* 
+vdd vdd 0 vdd 
+
+**** CLOCK 
+Va clk 0 pwl(0n 0 1n 0 1.1n 3.3 2n 3.3 2.1n 0 3n 0 3.1n 3.3 4n 3.3 4.1n 0 5n 0 5.1n 3.3 6n 3.3 6.1n 0)
+
+**** data input
+Vb data 0 pwl(0n 0 1.93n 0 2.03n 3.3 2.09n 3.3 2.19n 0 2.75n 0 2.85n 3.3 3.89n 3.3 3.99n 0 4.03n 0 4.13n 3.3 4.75n 3.3 4.85n 0)
+
+***** define global nodes for use in subcircuits ***** 
+.global vdd 
+
+********* define subcircuits ****************** 
+.subckt ptran gate drain source Wp=1.0 
+Mp1 drain gate source vdd tsmc0p35pmos W=Wp L=Lmin 
++ PD='Wp + 6*Lmin' PS='Wp + 6*Lmin' 
++ AD='3*Wp*Lmin' AS='3*Wp*Lmin' 
+.ends 
+
+.subckt ntran gate drain source Wn=1.0 
+Mn1 drain gate source 0 tsmc0p35nmos W=Wn L=Lmin 
++ PD='Wn + 6*Lmin' PS='Wn + 6*Lmin' 
++ AD='3*Wn*Lmin' AS='3*Wn*Lmin' 
+.ends 
+
+********* define main circuit ****************** 
+Xpmos0 clk clkb vdd ptran Wp=4.0u
+Xnmos0 clk clkb 0   ntran Wn=2.0u
+
+Xpmos1 clkb data n1 ptran Wp=4.0u
+Xnmos1 clk  data n1 ntran Wn=2.0u
+
+Xpmos2 n1 n2 vdd ptran Wp=4.0u
+Xnmos2 n1 n2 0   ntran Wn=2.0u
+
+Xpmos3 n2 q vdd ptran Wp=4.0u
+Xnmos3 n2 q 0   ntran Wn=2.0u
+
+Xpmos4 n2 n3 vdd ptran Wp=4.0u
+Xnmos4 n2 n3 0   ntran Wn=2.0u
+
+Xpmos5 clk  n3 n1 ptran Wp=4.0u
+Xnmos5 clkb n3 n1 ntran Wn=2.0u
+
+* Load capacitance 
+* Cl q 0 0.1p 
+
+
+****** Anlysis Options ********** 
+.tran 1p 6n  
+
+.meas tran tplh_setup trig v(data) td=1.2ns val='vdd/2' cross=1 
+ + targ v(clk) td=1.2ns val='vdd/2' cross=1 
+.meas tran tphl_setup trig v(data) td=3.2ns val='vdd/2' cross=1 
+ + targ v(clk) td=3.2ns val='vdd/2' cross=1 
+
+.meas tran tphl_setup(1) trig v(clk) td=1.95ns val='vdd/2' cross=1 
+ + targ v(data) td=2.0ns val='vdd/2' cross=1 
+
+.meas tran tplh_setup(1) trig v(clk) td=3.95ns val='vdd/2' cross=1 
+ + targ v(data) td=4.03ns val='vdd/2' cross=1 
+
+.end 
+
+.control
+run 
+set color0 = white
+set xbrushwidth = 5  
+plot v(clk) v(data) v(q) xdelta 6n ydelta 1.65
+.endc

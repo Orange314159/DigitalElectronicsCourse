@@ -1,0 +1,114 @@
+* C:\Users\E151509\Documents\CoolSpice\MyNetlists\path_delay_0_15p_2025_start.net
+.include "../Models/MOSIS.txt"
+ 
+*********** define parameters *********** 
+.param vdd = 3.3 
+.param Lmin = 0.35u 
+ 
+
+***************** define stimulii ********************* 
+vdd vdd 0 vdd 
+
+**** CLOCK 
+Vclk  clk 0 pwl(0n 0 4n 0 4.1n 3.3 8n 3.3 8.1n 0 12n 0 12.1n 3.3 16n 3.3 16.1n 0 20n 0 20.1n 3.3 24n 3.3 24.1n 0 27.741n 0 27.841n 3.3 32.0n 3.3)
+**** Flip-flop data input
+Vdata data 0 pwl(0n 0 18.0n 0 18.1n 3.3 35.0n 3.3)
+
+***** define global nodes for use in subcircuits ***** 
+.global vdd 
+.temp 27
+
+.subckt ptran gate drain source Wp=1.0u
+Mp1 drain gate source vdd tsmc0p35pmos W=Wp L=Lmin 
++ PD='Wp + 6*Lmin' PS='Wp + 6*Lmin' 
++ AD='3*Wp*Lmin' AS='3*Wp*Lmin' 
+.ends 
+
+.subckt ntran gate drain source Wn=1.0u 
+Mn1 drain gate source 0 tsmc0p35nmos W=Wn L=Lmin 
++ PD='Wn + 6*Lmin' PS='Wn + 6*Lmin' 
++ AD='3*Wn*Lmin' AS='3*Wn*Lmin' 
+.ends 
+
+.subckt inv in out Wp=1.0u Wn=1.0u
+Xpmos in out vdd ptran Wp=Wp
+Xnmos in out 0   ntran Wn=Wn
+.ends
+
+.subckt tgate ngate pgate in out Wp=1.0u Wn=1.0u
+Xpmos pgate in out ptran Wp=Wp
+Xnmos ngate in out ntran Wn=Wn
+.ends
+
+.subckt flip_flop data q clk
+** D LATCH
+Xinv0 clk clkb inv Wp=4.0u Wn=2.0u
+Xtgate0 clkb clk data n1 tgate Wp=4.0u Wn=2.0u
+Xinv1 n1 n2 inv Wp=8.0u Wn=4.0u
+Xinv3 n2 n3 inv Wp=2.0u Wn=1.0u
+Xtgate1 clk clkb n3 n1 tgate Wp=4.0u Wn=2.0u
+
+** OUTPUT D LATCH
+Xtgate2 clk clkb n2 n5 tgate Wp=4.0u Wn=2.0u
+Xinv4 n5 n6 inv Wp=4.0u Wn=2.0u
+Xinv6 n6 n7 inv Wp=2.0u Wn=1.0u
+Xinv5 n5 q  inv Wp=4.0u Wn=2.0u
+Xtgate3 clkb clk n7 n5 tgate Wp=4.0u Wn=2.0u
+.ends
+
+********* define main circuit ****************** 
+Xff0 data q0 clk flip_flop
+Cff0 q0 0 0.15p
+
+Xinv1 q0 n1  inv Wp=4.0u Wn=2.0u
+C1 n1 0 0.15p
+
+Xinv2 n1 n2 inv Wp=4.0u Wn=2.0u
+C2 n2 0 0.15p
+
+Xinv3 n2 n3 inv Wp=4.0u Wn=2.0u
+C3 n3 0 0.15p
+
+Xinv4 n3 n4 inv Wp=4.0u Wn=2.0u
+C4 n4 0 0.15p
+
+Xinv5 n4 n5 inv Wp=4.0u Wn=2.0u
+C5 n5 0 0.15p
+
+Xinv6 n5 n6 inv Wp=4.0u Wn=2.0u
+C6 n6 0 0.15p
+
+Xinv7 n6 n7  inv Wp=4.0u Wn=2.0u
+C7 n7 0 0.15p
+
+Xinv8 n7 n8 inv Wp=4.0u Wn=2.0u
+C8 n8 0 0.15p
+
+Xinv9 n8 n9 inv Wp=4.0u Wn=2.0u
+C9 n9 0 0.15p
+
+Xinv10 n9 n10 inv Wp=4.0u Wn=2.0u
+C10 n10 0 0.15p
+
+Xinv11 n10 n11 inv Wp=4.0u Wn=2.0u
+C11 n11 0 0.15p
+
+Xinv12 n11 ff1in inv Wp=4.0u Wn=2.0u
+C12 ff1in 0 0.15p
+
+Xff1 ff1in q1 clk flip_flop
+Cff1 q1 0 0.15p
+
+****** Anlysis Options ********** 
+.tran 5p 32n  
+
+.end 
+
+.control
+set color0 = white      ;background
+** set color1 = black      ;text and grid
+run 
+set xbrushwidth = 4
+plot v(clk) v(data)  v(q0) v(ff1in) v(q1) xdelta 3n ydelta 2 xlimit 17n 31n
+.endc
+

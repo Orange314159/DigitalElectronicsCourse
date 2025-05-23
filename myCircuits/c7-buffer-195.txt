@@ -1,0 +1,37 @@
+* Buffer simulation
+.include "../Models/MOSIS.txt"
+Cload 0 buf_out 4pf
+
+Vsupply vdd 0 1.8V
+.global vdd
+
+.subckt inv in out wp=1u wn=1u
+Mp0 out in vdd vdd ibm0p13pmos W='wp' L=0.13u
+Mn0 out in 0 0 ibm0p13nmos W='wn' L=0.12u
+.ends
+
+VPulse1 Vin 0  pulse(0 1.8V 0 0.2n 0.2n 1.6n 4n)
+
+*input conditioning 
+xinv0 Vin net1 inv wp=2.5u wn=1.0u
+xinv1 net1 buf_in inv wp=2.5u wn=1.0u
+
+*buffer
+xinv2 buf_in  buf_mid inv wp=23.4670197899u wn=16.8222364085u
+xinv3 buf_mid buf_out inv wp=94.976865886u wn=59.7338779157u
+.TRAN 2p 9n
+.end
+.control
+run 
+set color0 = white
+set xbrushwidth = 5 
+plot v(buf_in) v(buf_mid) v(buf_out)
+
+meas tran tphl1 TRIG V(buf_in) TD=3.5n val=0.9 rise=1 TARG V(buf_mid) TD=3.5n val=0.9 fall=1
+meas tran tplh1 TRIG V(buf_in) TD=3.5n val=0.9 fall=1 TARG V(buf_mid)  TD=3.5n val=0.9 rise=1
+
+meas tran tphl2 TRIG V(buf_in) TD=3.5n val=0.9 rise=1 TARG V(buf_out) TD=3.5n val=0.9 rise=1
+meas tran tplh2 TRIG V(buf_in) TD=3.5n val=0.9 fall=1 TARG V(buf_out) TD=3.5n val=0.9 fall=1
+
+
+.endc 

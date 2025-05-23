@@ -1,0 +1,41 @@
+* Buffer simulation
+.include "../Models/MOSIS.txt"
+.param NMOSsmall = 10um
+
+Cload 0 buf_out 4pf
+
+Vsupply vdd 0 1.8V
+.global vdd
+
+.subckt inv in out wp=1u wn=1u
+Mp0 out in vdd vdd ibm0p13pmos W='wp' L=0.13u
+Mn0 out in 0 0 ibm0p13nmos W='wn' L=0.12u
+.ends
+
+VPulse1 Vin 0  pulse(0 1.8V 0 0.2n 0.2n 1.6n 4n)
+
+*input conditioning 
+xinv0 Vin net1 inv wp=2.5u wn=1.0u
+xinv1 net1 buf_in inv wp=2.5u wn=1.0u
+
+*buffer
+xinv2 buf_in  buf_mid inv wp=25.86u wn={NMOSsmall}
+xinv3 buf_mid buf_out inv wp=89.00u wn=63.57u
+
+.control
+
+
+
+repeat 10
+	alterparam NMOSsmall = {NMOSsmall} + 1e-6
+	reset
+	run
+	meas tran tphl2 TRIG V(buf_in) TD=3.5n val=0.9 rise=1 TARG V(buf_out) TD=3.5n val=0.9 rise=1
+	meas tran tplh2 TRIG V(buf_in) TD=3.5n val=0.9 fall=1 TARG V(buf_out) TD=3.5n val=0.9 fall=1
+end
+
+
+
+
+.endc 
+.end
