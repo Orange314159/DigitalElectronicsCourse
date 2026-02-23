@@ -3,3 +3,8 @@ NgSpice
 myCircuits
 Altera
 Quartus
+Nmos
+Pmos
+matplotlib
+numpy
+scipy

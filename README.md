@@ -9,7 +9,7 @@ In course order:
 - Oscilloscope Graphs 
     - This folder contains some graphs generated through my use of the in class oscilloscopes. There are included translated PNG files for quick viewing, and the raw BMP files for those that are more interested in content.
 - myCircuits
-    - This folder contains most of the circuits I created during the process of the course. One of the most interesting files is my included buffer sweep in which I attempted to optimize some buffers given a size constraint. (I will include the Python script that I used to analyze the optimization in the future)
+    - This folder contains most of the circuits I created during the process of the course. One of the most interesting files is my included buffer sweep in which I attempted to optimize some buffers given a size constraint.
 - Models 
     - This was a given model for a TSMC transistor used in some of the circuits.
 - Logisim Assignments
@@ -19,6 +19,17 @@ In course order:
 - (Not Included) Altera + Quartus FPGA Design
     - The projects done in Altera and Quartus for FPGA design are currently on a school owned computer, but I will work to include them in this repository as soon as feasibly possible. 
 
+## Coursework Example
+
+### Buffer Sweep Visualization
+![Buffer Sweep Photo](Photos\\bufferSweep.png)
+
+This diagram shows the buffer delay based on the gate to gate ratio and the Nmos to Pmos ratios for each transistor in the pair. The data for this visualization comes from the varied simulations that I wrote in spice. The visualization uses matplotlib, numpy, and scipy in order to generate the graphic in this way.
+
+### Full Computer Simulation
+![Full Computer Logisim](Photos\\fullComputer.png)
+
+This is the main file for my computer that I constructed in Logisim. As is visible, this implementation uses the built-in RAM from Logisim. While this is true, we covered how to create our own RAM in the course, but did not implement it in the computer in order to improve the speed of the simulations. 
 
 ## License 
 I do not give permission for any of this work to be used or copied by those that are currently taking this course (Digital Electronics at Liberal Arts and Science Academy). If you see this repository in search of help in your course feel free to reach out and email me with any questions you may have. If you are not taking this course currently I highly suggest you look around the different projects that I have completed here and find as much interest in them as I have. I plan to add more explanation at a further date.
