@@ -22,12 +22,12 @@ In course order:
 ## Coursework Example
 
 ### Buffer Sweep Visualization
-![Buffer Sweep Photo](Photos\\bufferSweep.png)
+![Buffer Sweep Photo](Photos/bufferSweep.png)
 
 This diagram shows the buffer delay based on the gate to gate ratio and the Nmos to Pmos ratios for each transistor in the pair. The data for this visualization comes from the varied simulations that I wrote in spice. The visualization uses matplotlib, numpy, and scipy in order to generate the graphic in this way.
 
 ### Full Computer Simulation
-![Full Computer Logisim](Photos\\fullComputer.png)
+![Full Computer Logisim](Photos/fullComputer.png)
 
 This is the main file for my computer that I constructed in Logisim. As is visible, this implementation uses the built-in RAM from Logisim. While this is true, we covered how to create our own RAM in the course, but did not implement it in the computer in order to improve the speed of the simulations. 
 
